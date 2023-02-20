@@ -1,16 +1,18 @@
 DO
 $$
     declare
-        username       text;
-        tab_name       text = 'actor';
-        table_id       oid;
-        column_record  record;
-        column_number  smallint;
-        my_column_name text;
-        column_type_id oid;
-        column_type    text;
-        result         text;
-        col_constraint text;
+        username            text;
+        tab_name            text = 'actor';
+        table_id            oid;
+        column_record       record;
+        column_number       smallint;
+        my_column_name      text;
+        column_type_id      oid;
+        column_type         text;
+        result              text;
+        col_constraint_id   oid;
+        col_constraint_name text;
+        col_constraint_type text;
     begin
         select current_user into username;
         raise info 'Пользователь: Ivan Kustarev (%)', username;
@@ -34,15 +36,20 @@ $$
                     into result;
                     raise info '%', result;
 
+                    select constr.oid
+                    from pg_catalog.pg_constraint as constr
+                    where table_id = constr.conrelid
+                      and column_number = any (constr.conkey)
+                    into col_constraint_id;
+
                     select constr.conname
                     from pg_catalog.pg_constraint as constr
-                    where table_id = constr.conrelid and
-			column_number = any (constr.conkey)
-                    into col_constraint;
-                    col_constraint = '"' || col_constraint || '"';
+                    where constr.oid = col_constraint_id
+                    into col_constraint_name;
+                    col_constraint_name = '"' || col_constraint_name || '"';
 
-                    if length(col_constraint) > 0 then
-                        select format('%-18s %-8s %-2s %s', '-', 'Constr', ':', col_constraint) into result;
+                    if length(col_constraint_name) > 0 then
+                        select format('%-18s %-8s %-2s %s', '-', 'Constr', ':', col_constraint_name) into result;
                         raise info '%', result;
                     end if;
 
