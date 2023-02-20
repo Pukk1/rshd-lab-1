@@ -48,8 +48,32 @@ $$
                     into col_constraint_name;
                     col_constraint_name = '"' || col_constraint_name || '"';
 
+                    select constr.contype
+                    from pg_catalog.pg_constraint as constr
+                    where constr.oid = col_constraint_id
+                    into col_constraint_type;
+
+                    if col_constraint_type = 'c' then
+                        col_constraint_type = 'check constraint';
+                    end if;
+                    if col_constraint_type = 'f' then
+                        col_constraint_type = 'foreign key constraint';
+                    end if;
+                    if col_constraint_type = 'p' then
+                        col_constraint_type = 'primary key constraint';
+                    end if;
+                    if col_constraint_type = 'u' then
+                        col_constraint_type = 'unique constraint';
+                    end if;
+                    if col_constraint_type = 't' then
+                        col_constraint_type = 'constraint trigger';
+                    end if;
+                    if col_constraint_type = 'x' then
+                        col_constraint_type = 'exclusion constraint';
+                    end if;
+
                     if length(col_constraint_name) > 0 then
-                        select format('%-18s %-8s %-2s %s', '-', 'Constr', ':', col_constraint_name) into result;
+                        select format('%-18s %-8s %-2s %s %s', '-', 'Constr', ':', col_constraint_name, col_constraint_type) into result;
                         raise info '%', result;
                     end if;
 
